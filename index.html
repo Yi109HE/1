@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HE本地文件夹文本搜索</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, #2c3e50, #4a69bd);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            position: relative;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .file-controls {
+            margin-bottom: 30px;
+        }
+        
+        .folder-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .folder-btn:hover {
+            background: linear-gradient(to right, #2980b9, #2573a7);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .folder-btn i {
+            margin-right: 10px;
+        }
+        
+        #folderInput {
+            display: none;
+        }
+        
+        .selected-folder {
+            margin-top: 15px;
+            padding: 12px;
+            background: #e3f2fd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .selected-folder i {
+            color: #3498db;
+            margin-right: 8px;
+        }
+        
+        .search-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .search-bar {
+            padding: 20px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .search-container {
+            display: flex;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        #searchInput {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid #3498db;
+            border-radius: 8px 0 0 8px;
+            font-size: 1.1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        #searchInput:focus {
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+        }
+        
+        #searchButton {
+            padding: 0 30px;
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #searchButton:hover {
+            background: linear-gradient(to right, #c0392b, #a53125);
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-item {
+            display: flex;
+            align-items: center;
+            background: #e3f2fd;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .filter-item select {
+            border: none;
+            background: transparent;
+            margin-left: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .results-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .result-item {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            border-left: 4px solid #3498db;
+            transition: transform 0.3s ease;
+        }
+        
+        .result-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .file-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .file-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .file-path {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .file-info {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+        
+        .match-content {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .highlight {
+            background-color: #ffeaa7;
+            font-weight: bold;
+            color: #e74c3c;
+            padding: 0 2px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #bdc3c7;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            background: #f8f9fa;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .search-container {
+                flex-direction: column;
+            }
+            
+            #searchInput {
+                border-radius: 8px;
+                margin-bottom: 10px;
+            }
+            
+            #searchButton {
+                border-radius: 8px;
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-search"></i> 本地文件夹文本搜索工具</h1>
+            <p class="subtitle">快速搜索本地文件夹中的文本内容，支持关键词高亮显示和文件过滤</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="file-controls">
+                    <button class="folder-btn" id="folderBtn">
+                        <i class="fas fa-folder-open"></i> 选择文件夹
+                    </button>
+                    <input type="file" id="folderInput" webkitdirectory directory multiple>
+                    
+                    <div class="selected-folder" id="folderInfo">
+                        <i class="fas fa-info-circle"></i> 未选择文件夹
+                    </div>
+                </div>
+                
+                <div class="file-stats">
+                    <h3><i class="fas fa-chart-bar"></i> 文件统计</h3>
+                    <div class="stats">
+                        <div>已加载文件: <span id="fileCount">0</span></div>
+                        <div>总大小: <span id="totalSize">0 KB</span></div>
+                    </div>
+                    
+                    <h3><i class="fas fa-filter"></i> 文件类型过滤</h3>
+                    <div class="filter-item">
+                        <i class="fas fa-file"></i> 类型:
+                        <select id="fileTypeFilter">
+                            <option value="all">所有文件</option>
+                            <option value="txt">文本文件 (.txt)</option>
+                            <option value="html">HTML 文件 (.html, .htm)</option>
+                            <option value="code">代码文件 (.js, .css, .py)</option>
+                            <option value="doc">文档 (.doc, .docx, .pdf)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <div class="search-bar">
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="输入要搜索的关键词...">
+                        <button id="searchButton">搜索</button>
+                    </div>
+                    
+                    <div class="filters">
+                        <div class="filter-item">
+                            <i class="fas fa-font"></i> 大小写敏感: 
+                            <select id="caseSensitive">
+                                <option value="no">否</option>
+                                <option value="yes">是</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <i class="fas fa-search"></i> 搜索模式: 
+                            <select id="searchMode">
+                                <option value="contains">包含关键词</option>
+                                <option value="exact">完全匹配</option>
+                                <option value="regex">正则表达式</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="results-container" id="resultsContainer">
+                    <div class="empty-state">
+                        <i class="fas fa-file-search"></i>
+                        <h3>搜索文件夹内容</h3>
+                        <p>选择一个文件夹并输入关键词开始搜索</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2025 YI本地文件夹文本搜索工具 | 试一试的思维</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const folderBtn = document.getElementById('folderBtn');
+            const folderInput = document.getElementById('folderInput');
+            const folderInfo = document.getElementById('folderInfo');
+            const fileCount = document.getElementById('fileCount');
+            const totalSize = document.getElementById('totalSize');
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const caseSensitive = document.getElementById('caseSensitive');
+            const searchMode = document.getElementById('searchMode');
+            const fileTypeFilter = document.getElementById('fileTypeFilter');
+            
+            // 存储文件数据
+            let files = [];
+            let currentFolder = '';
+            
+            // 选择文件夹
+            folderBtn.addEventListener('click', function() {
+                folderInput.click();
+            });
+            
+            folderInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    currentFolder = e.target.files[0].webkitRelativePath.split('/')[0];
+                    folderInfo.innerHTML = `<i class="fas fa-folder-open"></i> 已选择文件夹: <strong>${currentFolder}</strong>`;
+                    
+                    // 处理文件
+                    processFiles(e.target.files);
+                }
+            });
+            
+            // 处理选择的文件
+            function processFiles(fileList) {
+                files = [];
+                let count = 0;
+                let size = 0;
+                
+                // 过滤并读取文件
+                for (let i = 0; i < fileList.length; i++) {
+                    const file = fileList[i];
+                    
+                    // 只处理文本文件
+                    if (file.type.startsWith('text/') || 
+                        file.name.endsWith('.html') || 
+                        file.name.endsWith('.htm') || 
+                        file.name.endsWith('.js') || 
+                        file.name.endsWith('.css') || 
+                        file.name.endsWith('.py')) {
+                        
+                        count++;
+                        size += file.size;
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            files.push({
+                                name: file.name,
+                                path: file.webkitRelativePath,
+                                content: e.target.result,
+                                size: file.size
+                            });
+                            
+                            // 更新统计信息
+                            fileCount.textContent = files.length;
+                            totalSize.textContent = (size / 1024).toFixed(1) + ' KB';
+                        };
+                        reader.readAsText(file);
+                    }
+                }
+                
+                // 更新统计信息
+                fileCount.textContent = count;
+                totalSize.textContent = (size / 1024).toFixed(1) + ' KB';
+            }
+            
+            // 搜索功能
+            searchButton.addEventListener('click', function() {
+                performSearch();
+            });
+            
+            searchInput.addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            function performSearch() {
+                const searchTerm = searchInput.value.trim();
+                
+                if (searchTerm === '') {
+                    resultsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <h3>请输入搜索关键词</h3>
+                            <p>在搜索框中输入您要查找的内容</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                if (files.length === 0) {
+                    resultsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-folder-plus"></i>
+                            <h3>请先选择文件夹</h3>
+                            <p>点击"选择文件夹"按钮导入文件</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 执行搜索
+                const searchResults = [];
+                const caseSensitiveFlag = caseSensitive.value === 'yes';
+                const searchPattern = searchMode.value === 'regex' ? 
+                    new RegExp(searchTerm, caseSensitiveFlag ? 'g' : 'gi') : 
+                    null;
+                
+                files.forEach(file => {
+                    // 应用文件类型过滤
+                    const fileType = getFileType(file.name);
+                    const selectedType = fileTypeFilter.value;
+                    
+                    if (selectedType !== 'all' && !fileTypeMatches(selectedType, fileType)) {
+                        return;
+                    }
+                    
+                    const content = file.content;
+                    let matches = [];
+                    
+                    if (searchMode.value === 'exact') {
+                        // 完全匹配搜索
+                        const index = caseSensitiveFlag ? 
+                            content.indexOf(searchTerm) : 
+                            content.toLowerCase().indexOf(searchTerm.toLowerCase());
+                        
+                        if (index !== -1) {
+                            matches = [{
+                                line: getLineNumber(content, index),
+                                text: extractContext(content, index, searchTerm.length)
+                            }];
+                        }
+                    } else if (searchMode.value === 'regex') {
+                        // 正则表达式搜索
+                        let match;
+                        while ((match = searchPattern.exec(content)) !== null) {
+                            matches.push({
+                                index: match.index,
+                                text: extractContext(content, match.index, match[0].length)
+                            });
+                        }
+                    } else {
+                        // 包含关键词搜索
+                        let searchIndex = 0;
+                        while (true) {
+                            const index = caseSensitiveFlag ? 
+                                content.indexOf(searchTerm, searchIndex) : 
+                                content.toLowerCase().indexOf(searchTerm.toLowerCase(), searchIndex);
+                            
+                            if (index === -1) break;
+                            
+                            matches.push({
+                                line: getLineNumber(content, index),
+                                text: extractContext(content, index, searchTerm.length)
+                            });
+                            
+                            searchIndex = index + searchTerm.length;
+                        }
+                    }
+                    
+                    if (matches.length > 0) {
+                        searchResults.push({
+                            file: file,
+                            matches: matches
+                        });
+                    }
+                });
+                
+                // 显示结果
+                displayResults(searchResults, searchTerm);
+            }
+            
+            // 显示搜索结果
+            function displayResults(results, searchTerm) {
+                if (results.length === 0) {
+                    resultsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search-minus"></i>
+                            <h3>未找到匹配结果</h3>
+                            <p>请尝试其他关键词或更改搜索设置</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let resultsHtml = `
+                    <div class="stats">
+                        <div>找到 <strong>${results.length}</strong> 个文件包含匹配内容</div>
+                        <div>总匹配数: <strong>${results.reduce((acc, curr) => acc + curr.matches.length, 0)}</strong></div>
+                    </div>
+                `;
+                
+                results.forEach(result => {
+                    const file = result.file;
+                    
+                    resultsHtml += `
+                        <div class="result-item">
+                            <div class="file-header">
+                                <div>
+                                    <div class="file-title">${file.name}</div>
+                                    <div class="file-path">${file.path}</div>
+                                </div>
+                                <div class="file-info">
+                                    ${(file.size / 1024).toFixed(1)} KB | ${result.matches.length} 处匹配
+                                </div>
+                            </div>
+                            
+                            <div class="matches-container">
+                    `;
+                    
+                    // 显示最多5个匹配
+                    const maxMatches = Math.min(result.matches.length, 5);
+                    for (let i = 0; i < maxMatches; i++) {
+                        const match = result.matches[i];
+                        let highlightedText = match.text;
+                        
+                        // 高亮搜索词
+                        if (searchMode.value === 'regex') {
+                            highlightedText = highlightedText.replace(
+                                new RegExp(searchTerm, caseSensitive.value === 'yes' ? 'g' : 'gi'),
+                                '<span class="highlight">$&</span>'
+                            );
+                        } else {
+                            const regex = new RegExp(searchTerm, caseSensitive.value === 'yes' ? 'g' : 'gi');
+                            highlightedText = highlightedText.replace(
+                                regex, 
+                                '<span class="highlight">$&</span>'
+                            );
+                        }
+                        
+                        resultsHtml += `
+                            <div class="match-content">
+                                <strong>匹配 ${i+1}:</strong> ${highlightedText}
+                            </div>
+                        `;
+                    }
+                    
+                    if (result.matches.length > 5) {
+                        resultsHtml += `
+                            <div class="match-content" style="text-align: center; font-style: italic;">
+                                还有 ${result.matches.length - 5} 处匹配未显示...
+                            </div>
+                        `;
+                    }
+                    
+                    resultsHtml += `
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                resultsContainer.innerHTML = resultsHtml;
+            }
+            
+            // 辅助函数：获取行号
+            function getLineNumber(content, index) {
+                return content.substring(0, index).split('\n').length;
+            }
+            
+            // 辅助函数：提取上下文
+            function extractContext(content, index, length) {
+                const start = Math.max(0, index - 30);
+                const end = Math.min(content.length, index + length + 70);
+                
+                let context = content.substring(start, end);
+                
+                // 添加省略号
+                if (start > 0) context = '...' + context;
+                if (end < content.length) context = context + '...';
+                
+                // 替换换行符
+                context = context.replace(/\n/g, '↵').replace(/\r/g, '');
+                
+                return context;
+            }
+            
+            // 获取文件类型
+            function getFileType(filename) {
+                if (filename.endsWith('.txt')) return 'txt';
+                if (filename.endsWith('.html') || filename.endsWith('.htm')) return 'html';
+                if (filename.endsWith('.js') || filename.endsWith('.css') || filename.endsWith('.py')) return 'code';
+                if (filename.endsWith('.doc') || filename.endsWith('.docx') || filename.endsWith('.pdf')) return 'doc';
+                return 'other';
+            }
+            
+            // 检查文件类型是否匹配
+            function fileTypeMatches(selectedType, fileType) {
+                if (selectedType === 'txt') return fileType === 'txt';
+                if (selectedType === 'html') return fileType === 'html';
+                if (selectedType === 'code') return fileType === 'code';
+                if (selectedType === 'doc') return fileType === 'doc';
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>
